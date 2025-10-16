@@ -4,7 +4,10 @@ export enum Status {
     "poisoned",
     "frozen",
     "burning",
-    "stunned"
+    "stunned",
+    "crippled",
+    "dodging",
+    "blocking"
 }
 
 export interface entity {

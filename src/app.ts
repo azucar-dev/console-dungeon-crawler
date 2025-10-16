@@ -1,7 +1,7 @@
 import * as readline from 'readline';
-import { entity , Status} from "./types";
+import { entity, Status } from "./types";
 import { attack } from "./combat";
-import { weapons , moves } from "./weapons";
+import { weapons, moves } from "./weapons";
 
 function askQuestion(query: string): Promise<string> {
     const rl = readline.createInterface({
@@ -106,7 +106,8 @@ function createEnemy(playerstats: number[], playerlevel: number): entity {
         "Mistress Marginalia, AFK in the Catacombs",
         "The Forgotten Build, Scaler of Nothing",
         "Hollow Chad of Irithyll",
-        "Peter the undivine"];
+        "Peter the undivine",
+        "The knight who says 'NI'"];
 
     const random: number = Math.floor(Math.random() * names.length);
     const weapon: number = Math.floor(Math.random() * weapons.length);
@@ -180,9 +181,18 @@ async function main() {
 
     console.log(enemy);
     console.log(player);
-    console.log(moves(player.weapon));
-    console.log(attack("punch", player.stamina));
 
+    const availableMoves = moves(player.weapon);
+    console.log(`Available moves: ${availableMoves.join(", ")}`);
+
+    const chosenMove = await askQuestion("Which move do you want to use? ");
+    const normalizedMove = chosenMove.toLowerCase();
+
+    if (!availableMoves.map(m => m.toLowerCase()).includes(normalizedMove)) {
+        console.log("That move isn't available for your weapon!");
+    } else {
+        const result = await attack(normalizedMove, player.stamina, player.stats);
+        console.log(result);
+    }
 }
-
-main();
+    main();
