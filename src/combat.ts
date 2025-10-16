@@ -1,4 +1,4 @@
-import { Status } from "./types"
+import { Status, PlayerStats, MoveResult, MoveContext  } from "./types"
 
 export async function attack(moves: string, stamina: number, playerStats: number[]) {
     const agility = playerStats[3];
@@ -8,16 +8,15 @@ export async function attack(moves: string, stamina: number, playerStats: number
     let status: Status = Status.okay;
     let stamUsed: number = 0;
 
-    const baseHitChance = 50;          // 50% base
-    const agilityBonus = agility * 3;  // each Agility point adds 3%
-    const hitChancePercent = Math.min(95, baseHitChance + agilityBonus); // cap at 95%
-    const hitChance = Math.ceil(hitChancePercent / 5); // scale to 1-20
+    const baseHitChance = 50;         
+    const agilityBonus = agility * 3;  
+    const hitChancePercent = Math.min(95, baseHitChance + agilityBonus); 
+    const hitChance = Math.ceil(hitChancePercent / 5); 
 
     const rollPercent = randomInt(1, 100);
-    const roll = Math.ceil(rollPercent / 5); // 1-20 scale
+    const roll = Math.ceil(rollPercent / 5); 
     const statusRoll = randomInt(0, 100);
 
-    // Helper function for rolling animation
     async function rollAnimation(moveName: string) {
         process.stdout.write(`\n🎲 Rolling for ${moveName}`);
         for (let i = 0; i < 3; i++) {

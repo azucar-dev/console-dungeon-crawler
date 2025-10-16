@@ -20,3 +20,29 @@ export interface entity {
     turn: boolean;
     status: Status;
 }
+
+export type PlayerStats = {
+  vitality: number;
+  strength: number;
+  dexterity: number;
+  agility: number;
+};
+
+export type MoveResult = {
+  damage: number;
+  blocked: boolean;
+  healed: number;
+  status: string | undefined;
+  stamUsed: number;
+};
+
+export type MoveContext = {
+  roll: number; 
+  hitChance: number; 
+  statusRoll: number; 
+  agilityBonus: number;
+  stamina: number; 
+  playerStats: PlayerStats;
+  rollAnimation: (name: string) => Promise<void>;
+  randomInt: (min: number, max: number) => number;
+};
