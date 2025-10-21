@@ -1,9 +1,9 @@
 import * as readline from 'readline';
 import { entity, Status } from "./types";
-import { attack } from "./combat";
-import { weapons, moves } from "./weapons";
+import { attack, randomInt } from "./combat";
+import { weapons, moves } from "./items";
 
-function askQuestion(query: string): Promise<string> {
+export function askQuestion(query: string): Promise<string> {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -110,6 +110,7 @@ function createEnemy(playerstats: number[], playerlevel: number): entity {
         "The knight who says 'NI'"];
 
     const random: number = Math.floor(Math.random() * names.length);
+
     const weapon: number = Math.floor(Math.random() * weapons.length);
     const enemyStats = generateEnemyStats(playerstats);
 
@@ -172,7 +173,7 @@ async function main() {
         health: 50 * (stats[0] * 0.64),
         stamina: 100 * (stats[0] * 0.64),
         stats: stats,
-        weapon: weapons[18],
+        weapon: weapons[0],
         turn: false,
         status: Status.okay
     }
@@ -182,17 +183,45 @@ async function main() {
     console.log(enemy);
     console.log(player);
 
-    const availableMoves = moves(player.weapon);
-    console.log(`Available moves: ${availableMoves.join(", ")}`);
 
-    const chosenMove = await askQuestion("Which move do you want to use? ");
-    const normalizedMove = chosenMove.toLowerCase();
+    while (player.health > 0 && enemy.health > 0) {
+        const availableMoves = moves(player.weapon);
+        console.log("⚔️ Your turn...");
+        console.log(`Available moves: ${availableMoves.join(", ")}`);
 
-    if (!availableMoves.map(m => m.toLowerCase()).includes(normalizedMove)) {
-        console.log("That move isn't available for your weapon!");
-    } else {
-        const result = await attack(normalizedMove, player.stamina, player.stats);
-        console.log(result);
+        let validMove = false;
+
+        while (!validMove) {
+            const chosenMove = await askQuestion("Which move do you want to use? ");
+            const normalizedMove = chosenMove.toLowerCase();
+
+            if (!availableMoves.map(m => m.toLowerCase()).includes(normalizedMove)) {
+                console.log("That move isn't available for your weapon!");
+            } else {
+                const result = await attack(normalizedMove, player.stats, true);
+                console.log(result);
+                validMove = true;
+            }
+        }
+
+        if (enemy.health <= 0) {
+            console.log("💀 The enemy has been defeated!");
+            break; // exit loop
+        }
+
+        console.log("\n ⚔️ Enemy's turn...");
+        const weaponMoves = moves(enemy.weapon);
+        const chosenMoveIndex = randomInt(0, weaponMoves.length - 1);
+        const enemyMove = weaponMoves[chosenMoveIndex].toLowerCase();
+
+        console.log(`⚔️ Enemy uses ${enemyMove}!`);
+        const enemyResult = await attack(enemyMove, enemy.stats, false);
+        console.log(enemyResult);
+
+        if (player.health <= 0) {
+            console.log("☠️ You have been defeated...");
+            process.exit(0); // graceful exit
+        }
     }
 }
     main();
