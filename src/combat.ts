@@ -1,4 +1,4 @@
-import { Status } from "./types";
+import { entity, Status } from "./types";
 
 async function askQuestionWithTimeout(question: string, timeout: number): Promise<string | null> {
     const readline = await import("readline");
@@ -24,27 +24,25 @@ async function askQuestionWithTimeout(question: string, timeout: number): Promis
 
     return Promise.race([questionPromise, timeoutPromise]);
 }
+export async function attack(moves: string, player: entity, enemy: entity, turn: boolean) {
+    const attacker = turn ? player : enemy;
+    const agility = attacker.stats[3];
+    const strength = attacker.stats[1];
 
 
-export async function attack(moves: string, playerStats: number[], turn: boolean) {
-    const agility = playerStats[3];
-    const strength = playerStats[1];
+    const name: string = enemy.name;
     let damage: number = 0;
     let healed: number = 0;
     let enemyStatus: Status = Status.okay;
     let playerStatus: Status = Status.okay;
     let stamUsed: number = 0;
-
-
-    const baseHitChance = 50;
     const agilityBonus = agility * 3;
+    const hitChancePercent = Math.min(95, 50 + agilityBonus);
+    const hitChance = 21 - Math.floor(hitChancePercent / 5);
     const strengthBonus = strength * 3;
-    const hitChancePercent = Math.min(95, baseHitChance + agilityBonus);
-    const hitChance = Math.ceil(hitChancePercent / 5);
     const baseStam = 320;
 
-    const rollPercent = randomInt(1, 100);
-    const roll = Math.ceil(rollPercent / 5);
+    const rollPercent = randomInt(1, 20);
     const statusRoll = randomInt(0, 100);
 
     const logAction = (playerMsg: string, enemyMsg: string) => {
@@ -52,13 +50,14 @@ export async function attack(moves: string, playerStats: number[], turn: boolean
     };
 
     async function rollAnimation(moveName: string) {
-        process.stdout.write(`\n🎲 Rolling for ${moveName}`);
+        process.stdout.write(`\n🎲 Rolling for ${moveName}\n`);
         for (let i = 0; i < 3; i++) {
             process.stdout.write(".");
             await new Promise(r => setTimeout(r, 200));
         }
-        console.log(` Rolled: ${roll} (Hit chance: ${hitChancePercent.toFixed(1)}%)`);
+        console.log(`Rolled: ${rollPercent} (Need ${hitChance}+ to hit)`);
     }
+
 
     switch (moves.toLowerCase()) {
         // unarmed
@@ -67,32 +66,45 @@ export async function attack(moves: string, playerStats: number[], turn: boolean
 
             await rollAnimation("punch");
 
-            if (roll < hitChance) {
-                logAction("❌ You take a swing at the enemy's head, but miss horribly.", "❌ The enemy takes a swing at your head, but misses horribly.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You take a swing at ${name}'s head, but miss horribly.`,
+                    `❌ ${name} took a swing at your head, but missed horribly.`
+                );
                 damage = 0;
             } else {
                 damage = randomInt(15, 30) + strengthBonus;
-                if (roll >= 18) {
+
+                if (rollPercent >= 19) {
                     logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
                     damage = Math.floor(damage * 1.25);
-                    logAction("😵 Your critical hit stunned the enemy!","😵 The enemy's critical hit stunned you!");
+                    logAction(
+                        `😵 Your critical hit stunned ${name}!`,
+                        `😵 ${name}'s critical hit stunned you!`
+                    );
                     if (turn) {
                         enemyStatus = Status.stunned;
                     } else {
                         playerStatus = Status.stunned;
                     }
                 }
-                logAction(`✅ You hit the enemy for ${damage} damage!`, `✅ The enemy hit you for ${damage} damage!` );
-                if (statusRoll <= statusThreshold && roll < 18) {
+
+                logAction(
+                    `✅ You hit ${name} for ${damage} damage!`,
+                    `✅ ${name} hit you for ${damage} damage!`
+                );
+
+                if (statusRoll >= statusThreshold && rollPercent < 19) {
                     if (turn) {
-                        logAction("😵 You stunned the enemy!", "😵 the enemy stunned You!");
+                        logAction("😵 You stunned the enemy!", "");
                         enemyStatus = Status.stunned;
                     } else {
-                        enemylogAction("😵 The enemy stunned you!");
+                        logAction(`😵 ${name} stunned you!`, "");
                         playerStatus = Status.stunned;
                     }
                 }
             }
+
             stamUsed = baseStam * 0.05;
             break;
         }
@@ -102,28 +114,45 @@ export async function attack(moves: string, playerStats: number[], turn: boolean
 
             await rollAnimation("kick");
 
-            if (roll < hitChance) {
-                logAction("❌ You try to kick the enemy in the shin, but miss.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You try to kick ${name} in the shin, but miss.`,
+                    `❌ ${name} tries to kick you in the shin, but misses.`
+                );
                 damage = 0;
             } else {
                 damage = randomInt(25, 50) + strengthBonus;
-                if (roll >= 18) {
-                    console.logAction("💥 CRITICAL HIT!");
+
+                if (rollPercent >= 19) {
+                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
                     damage = Math.floor(damage * 1.25);
-                    logAction("🦵 Your critical hit crippled the enemies leg!");
-                    enemylogAction("🦵 The enemy cripped your leg!");
+                    logAction(
+                        `🦵 Your critical kick crippled ${name}'s leg!`,
+                        `🦵 ${name}'s critical kick crippled your leg!`
+                    );
                     if (turn) {
                         enemyStatus = Status.crippled;
                     } else {
                         playerStatus = Status.crippled;
                     }
                 }
-                logAction(`✅ You kicked the enemy in the shin and did ${damage} damage!`);
-                if (statusRoll <= statusThreshold && roll < 18) {
-                    enemyStatus = Status.crippled;
-                    logAction("🦵 You crippled the enemy's leg!");
+
+                logAction(
+                    `✅ You kicked ${name} in the shin and did ${damage} damage!`,
+                    `✅ ${name} kicked you in the shin and did ${damage} damage!`
+                );
+
+                if (statusRoll >= statusThreshold && rollPercent < 19) {
+                    if (turn) {
+                        enemyStatus = Status.crippled;
+                        logAction(`🦵 You crippled ${name}'s leg!`, "");
+                    } else {
+                        playerStatus = Status.crippled;
+                        logAction(`🦵 ${name} crippled your leg!`, "");
+                    }
                 }
             }
+
             stamUsed = baseStam * 0.07;
             break;
         }
@@ -131,35 +160,52 @@ export async function attack(moves: string, playerStats: number[], turn: boolean
         case "dodge": {
             await rollAnimation("dodge");
 
-            if (roll < hitChance) {
-                logAction("❌ You try to dodge, but fall over your own feet, leaving yourself open!");
+            if (rollPercent < hitChance) {
+                logAction(
+                    "❌ You try to dodge, but fall over your own feet, leaving yourself open!",
+                    `❌ ${name} tries to dodge, but falls over, leaving themselves open!`
+                );
             } else {
-                logAction("🛡️ You get ready to dodge your opponent's next attack...");
+                logAction(
+                    `🛡️ You get ready to dodge ${name}'s next attack...`,
+                    `🛡️ ${name} gets ready to dodge your next attack...`
+                );
                 playerStatus = Status.dodging;
             }
             stamUsed = baseStam * 0.05;
             break;
         }
 
-        // practice sword
         case "strike": {
             const statusThreshold = 70 - agilityBonus;
 
             await rollAnimation("strike");
 
-            if (roll < hitChance) {
-                logAction("❌ You take a swing (just like you practiced), but you miss the target narrowly.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You take a swing at ${name} (just like you practiced), but miss narrowly.`,
+                    `❌ ${name} takes a swing at you, but misses narrowly.`
+                );
             } else {
                 damage = randomInt(20, 35) + strengthBonus;
-                logAction(`🗡️ You strike your enemy in the shoulder! and did ${damage} damge!`);
-                if (roll > 18) {
-                    logAction("💥 CRITICAL HIT!");
+                logAction(
+                    `🗡️ You strike ${name} in the shoulder and did ${damage} damage!`,
+                    `🗡️ ${name} strikes you in the shoulder and did ${damage} damage!`
+                );
+                if (rollPercent >= 19) {
+                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
                     damage = Math.floor(damage * 1.25);
-                    logAction("😵 Your swing put your enemies' shoulder out of it's socket!");
+                    logAction(
+                        `😵 Your swing put ${name}'s shoulder out of its socket!`,
+                        `😵 ${name}'s swing put your shoulder out of its socket!`
+                    );
                     enemyStatus = Status.crippled;
                 }
-                if (roll <= statusThreshold && roll < 18) {
-                    logAction("😵 Your swing put your enemies' shoulder out of it's socket!");
+                if (statusRoll >= statusThreshold && rollPercent < 19) {
+                    logAction(
+                        `😵 Your swing put ${name}'s shoulder out of its socket!`,
+                        `😵 ${name}'s swing put your shoulder out of its socket!`
+                    );
                     enemyStatus = Status.crippled;
                 }
             }
@@ -172,62 +218,94 @@ export async function attack(moves: string, playerStats: number[], turn: boolean
 
             await rollAnimation("parry");
 
-            if (roll < hitChance) {
-                logAction("❌ You attempt a parry, but the enemy overpowers you, leaving you open to an attack.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You attempt a parry, but ${name} overpowers you, leaving you open to an attack.`,
+                    `❌ ${name} attempts a parry, but you overpower them, leaving them open.`
+                );
                 healed = -10;
             } else {
-                logAction(`🗡️ You parry the enemies' attack, leaving them open to a riposte`);
-                const answer = await askQuestionWithTimeout("❗ Riposte? (type 'r') ", 2500);
-                if (answer === "r") {
-                    riposted = true;
+                logAction(
+                    `🗡️ You parry ${name}'s attack, leaving them open to a riposte.`,
+                    `🗡️ ${name} parries your attack, leaving you open to a riposte.`
+                );
+                if (turn) {
+                    const answer = await askQuestionWithTimeout("❗ Riposte? (type 'r') ", 2500);
+                    if (answer === "r") {
+                        riposted = true;
+                    }
+                } else {
+                    const res: number = randomInt(0, 1);
+                    if (res === 1) {
+                        riposted = true;
+                    }
                 }
 
                 if (riposted) {
                     damage = randomInt(30, 40);
-                    if (roll > 18) {
-                        logAction("💥 CRITICAL HIT!")
-                        damage = Math.floor(damage * 1.25)
+                    if (rollPercent >= 19) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
                     }
-                    logAction("🗡️ You riposte successfully, dealing massive damage!");
+                    logAction(
+                        "🗡️ You riposte successfully, dealing massive damage!",
+                        "🗡️ Your opponent ripostes successfully, dealing massive damage!"
+                    );
                 } else {
-                    logAction("❌ You didn't respond in time, riposte failed.");
+                    logAction(
+                        "❌ You didn't respond in time, riposte failed.",
+                        "❌ Your opponent hesitated and missed their riposte opportunity."
+                    );
                 }
-
             }
-            stamUsed = baseStam * 0.10
+            stamUsed = baseStam * 0.10;
             break;
-
         }
 
         case "step back": {
             await rollAnimation("step back");
 
-            if (roll < hitChance) {
-                logAction("❌ You try to step back, but the opponent started his attack before you could get out of the way.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You try to step back, but ${name} started their attack before you could move.`,
+                    `❌ ${name} tries to step back, but you attack before they can move.`
+                );
             } else {
-                logAction("🛡️ You step out of range of your enemies next attack...");
+                logAction(
+                    `🛡️ You step out of range of ${name}'s next attack...`,
+                    `🛡️ ${name} steps out of range of your next attack...`
+                );
                 playerStatus = Status.dodging;
             }
             stamUsed = baseStam * 0.05;
             break;
         }
 
-        // poisoned knife
+        // Poisoned knife
         case "quick stab": {
             const statusThreshold = 70 - (agilityBonus * 0.75);
 
             await rollAnimation("quick stab");
 
-            if (roll < hitChance) {
-                logAction("❌ You try to stab your enemy... but you can't find an opening.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You try to stab ${name}... but can't find an opening.`,
+                    `❌ ${name} tries to stab you... but can't find an opening.`
+                );
             } else {
-                logAction("🔪 You stab your opponent in the chest!");
+                logAction(
+                    `🔪 You stab ${name} in the chest!`,
+                    `🔪 ${name} stabs you in the chest!`
+                );
                 damage = randomInt(30, 40) + strengthBonus;
-                if (roll > 18) {
+                if (rollPercent >= 19) {
                     damage = Math.floor(damage * 1.25);
                 }
-                if (roll <= statusThreshold) {
-                    logAction("🩸 Your opponent starts bleeding!");
+                if (statusRoll >= statusThreshold) {
+                    logAction(
+                        `🩸 ${name} starts bleeding!`,
+                        `🩸 You start bleeding!`
+                    );
                     enemyStatus = Status.bleeding;
                 }
             }
@@ -240,27 +318,45 @@ export async function attack(moves: string, playerStats: number[], turn: boolean
 
             await rollAnimation("venom jab");
 
-            if (roll < hitChance) {
-                logAction("❌ You attempt to poison your enemy with you knife...");
-                if (roll < 4) {
-                    logAction("☣️ You accidentally scrape yourself with the blade, poisoning yourself.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You attempt to poison ${name} with your knife...`,
+                    `❌ ${name} attempts to poison you with their knife...`
+                );
+                if (rollPercent < 4) {
+                    logAction(
+                        `☣️ You accidentally scrape yourself with the blade, poisoning yourself.`,
+                        `☣️ ${name} accidentally poisons themselves with their own blade.`
+                    );
                     playerStatus = Status.poisoned;
                 } else {
-                    logAction("❌ You try to get in close to attack your enemy, but he pushes you backwards, leading you to lose balance.");
+                    logAction(
+                        `❌ You try to get in close to attack ${name}, but they push you back, making you lose balance.`,
+                        `❌ ${name} tries to get in close to attack you, but you push them back and they lose balance.`
+                    );
                 }
             } else {
-                logAction("☠️ You hit your opponents with a slice across his forearm!");
+                logAction(
+                    `☠️ You hit ${name} with a slice across the forearm!`,
+                    `☠️ ${name} hits you with a slice across your forearm!`
+                );
                 damage = randomInt(25, 35) + strengthBonus;
-                if (roll > 18) {
-                    logAction("💥 CRITICAL HIT!");
+                if (rollPercent >= 19) {
+                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
                     damage = Math.floor(damage * 1.25);
                 }
 
-                if (roll <= statusThreshold) {
-                    logAction("☠️ The poison starts having an affect on your opponent...");
+                if (statusRoll >= statusThreshold) {
+                    logAction(
+                        `☠️ The poison starts affecting ${name}...`,
+                        `☠️ The poison starts affecting you...`
+                    );
                     enemyStatus = Status.poisoned;
                 } else {
-                    logAction("🤢 Your enemy throws up but seem to be unaffected...");
+                    logAction(
+                        `🤢 ${name} throws up but seems unaffected...`,
+                        `🤢 You throw up but seem unaffected...`
+                    );
                 }
             }
             stamUsed = baseStam * 0.07;
@@ -270,10 +366,16 @@ export async function attack(moves: string, playerStats: number[], turn: boolean
         case "retreat": {
             await rollAnimation("retreat");
 
-            if (roll < hitChance) {
-                logAction("❌ You make for a retreat, but your opponent catches on and stops you by attacking!");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You make for a retreat, but ${name} catches on and attacks!`,
+                    `❌ ${name} tries to retreat, but you catch them and attack!`
+                );
             } else {
-                logAction("🛡️ You step retreated to the shadows, making you invisible to the opponent");
+                logAction(
+                    `🛡️ You retreat into the shadows, making yourself invisible to ${name}.`,
+                    `🛡️ ${name} retreats into the shadows, disappearing from view.`
+                );
                 playerStatus = Status.dodging;
             }
             stamUsed = baseStam * 0.05;
@@ -286,62 +388,81 @@ export async function attack(moves: string, playerStats: number[], turn: boolean
 
             await rollAnimation("cursed slash");
 
-            if (roll < hitChance) {
-                logAction("❌ You go for a feinting slash at the enemy, but it was blocked.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You go for a feinting slash at ${name}, but it is blocked.`,
+                    `❌ ${name} goes for a feinting slash at you, but it is blocked.`
+                );
+                damage = 0;
             } else {
-                logAction("🗡️ You go for a feinting slash at the enemy...");
-                damage = randomInt(30, 40) + strengthBonus;
-                if (roll > 18) {
-                    logAction("💥 CRITICAL HIT!");
+                damage = randomInt(25, 45) + strengthBonus;
+                if (rollPercent >= 19) {
+                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
                     damage = Math.floor(damage * 1.25);
                 }
-                if (roll <= statusThreshold) {
-                    logAction("🤬 Your slash cursed the enemy, his strength is waning...");
-                    enemyStatus = Status.cursed;
+                logAction(
+                    `⚔️ You slash ${name} with your cursed blade, doing ${damage} damage!`,
+                    `⚔️ ${name} slashes you with their cursed blade, doing ${damage} damage!`
+                );
+
+                if (statusRoll >= statusThreshold) {
+                    logAction(
+                        `☠️ The cursed blade's poison takes hold on ${name}.`,
+                        `☠️ The cursed blade's poison takes hold on you.`
+                    );
+                    enemyStatus = Status.poisoned;
                 }
             }
-            stamUsed = baseStam * 0.08;
+            stamUsed = baseStam * 0.06;
             break;
         }
 
-        case "life drain": {
+        case "dark strike": {
+            const statusThreshold = 65 - agilityBonus;
 
-            await rollAnimation("life drain");
+            await rollAnimation("dark strike");
 
-            if (roll < hitChance) {
-                logAction("❌ You try to steal your enemy's life force for yourself, but he resisted the spell.");
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You attempt a dark strike on ${name}, but miss.`,
+                    `❌ ${name} attempts a dark strike on you, but misses.`
+                );
             } else {
-                healed = randomInt(20, 45);
-                damage = healed;
-                logAction(`😈 You aim your sword at your enemy, a stream of black particles appear from his mouth, entering yours.. (HP UP: ${healed}`);
-            }
-            stamUsed = baseStam * 0.10;
-            break;
-        }
+                damage = randomInt(30, 50) + strengthBonus;
+                if (rollPercent >= 19) {
+                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                    damage = Math.floor(damage * 1.25);
+                }
+                logAction(
+                    `🌑 You hit ${name} with a dark strike for ${damage} damage!`,
+                    `🌑 ${name} hits you with a dark strike for ${damage} damage!`
+                );
 
-        case "ghost lunge": {
-            await rollAnimation("ghost lunge");
-
-            if (roll < hitChance) {
-                logAction("❌ You attempt a spectral lunge, but your enemy sidesteps just in time.");
-            } else {
-                logAction("👻 You phase forward, your weapon passing through armor with ghostly precision!");
-                damage = randomInt(40, 55) + strengthBonus;
-                if (roll > 18) {
-                    logAction("💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.35);
+                if (statusRoll >= statusThreshold) {
+                    logAction(
+                        `😵 ${name} is weakened by the dark strike!`,
+                        `😵 You are weakened by the dark strike!`
+                    );
+                    enemyStatus = Status.crippled;
                 }
             }
-            stamUsed = baseStam * 0.10;
+            stamUsed = baseStam * 0.07;
             break;
         }
 
+        default: {
+            logAction(`❌ Unknown move "${moves}". No action taken.`, `❌ Unknown move "${moves}". No action taken.`);
+            stamUsed = 0;
+            break;
+        }
     }
-    return { damage, healed, playerStatus: Status[playerStatus], enemyStatus: Status[enemyStatus], stamUsed: Math.round(stamUsed) };
 
+    if (turn) {
+        return [damage, healed, stamUsed, enemyStatus, playerStatus];
+    } else {
+        return [damage, healed, stamUsed, playerStatus, enemyStatus];
+    }
 }
-
-
 
 export function randomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
