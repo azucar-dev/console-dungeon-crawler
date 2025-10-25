@@ -121,7 +121,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 damage = 0;
             } else {
-                damage = randomInt(25, 50) + strengthBonus;
+                damage = randomInt(25, 35) + strengthBonus;
 
                 if (rollPercent >= 19) {
                     logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
@@ -395,7 +395,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 damage = 0;
             } else {
-                damage = randomInt(25, 45) + strengthBonus;
+                damage = randomInt(30, 45) + strengthBonus;
                 if (rollPercent >= 19) {
                     logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
                     damage = Math.floor(damage * 1.25);
@@ -447,6 +447,11 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 }
             }
             stamUsed = baseStam * 0.07;
+            break;
+        }
+
+        case "lifedrain": {
+            
             break;
         }
 

@@ -173,7 +173,7 @@ async function main() {
         health: 50 * (stats[0] * 0.64),
         stamina: 100 * (stats[0] * 0.64),
         stats: stats,
-        weapon: weapons[1],
+        weapon: weapons[2],
         turn: false,
         status: Status.okay
     }
@@ -203,15 +203,18 @@ async function main() {
                     console.log("That move isn't available for your weapon!");
                 } else {
                     const result = await attack(normalizedMove, player, enemy, true);
-                    console.log(result);
                     validMove = true;
+
+                    enemy.health -= result[0];
+                    console.log(`CURRENT ENEMY HEALTH: ${enemy.health}`);
                 }
             }
 
             if (enemy.health <= 0) {
                 console.log("💀 The enemy has been defeated!");
-                break; 
+                break;
             }
+            await new Promise(res => setTimeout(res, 3000));
 
             console.log("\n⚔️ Enemy's turn...");
             const weaponMoves = moves(enemy.weapon);
@@ -220,11 +223,14 @@ async function main() {
 
             console.log(`⚔️ Enemy uses ${enemyMove}!`);
             const enemyResult = await attack(enemyMove, player, enemy, false);
-            console.log(enemyResult);
+
+            player.health -= enemyResult[0];
+            console.log(`CURRENT HEALTH: ${player.health}`);
+
 
             if (player.health <= 0) {
                 console.log("☠️ You have been defeated...");
-                process.exit(0); // graceful exit
+                process.exit(0);
             }
         }
     }

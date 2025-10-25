@@ -89,7 +89,7 @@ export const items: Item = {
         desc: "Mace once wielded by barbarian warriors invading civil society.",
         moves: [
             { name: "crushing blow", desc: "Jump attack using your bodyweight as the main force behind the blow, breaks bones easily." },
-            { name: "heavenly crush", desc: "Brings your strike down onto the enemy’s head, smashing them into the ground." },
+            { name: "heavenly crush", desc: "Brings your strike down onto the enemy's head, smashing them into the ground." },
             { name: "stun bash", desc: "Uses the butt of the mace to stun enemies." }
         ]
     },
