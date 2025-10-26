@@ -118,7 +118,7 @@ function createEnemy(playerstats: number[], playerlevel: number): entity {
         lvl: playerlevel,
         name: names[random],
         health: 100 * (enemyStats[0] * 0.64),
-        stamina: 100 * (enemyStats[3] * 0.64),
+        stamina: 10 * (enemyStats[3] * 0.64),
         stats: generateEnemyStats(playerstats),
         weapon: weapons[weapon],
         turn: false,
@@ -173,26 +173,27 @@ async function main() {
         health: 50 * (stats[0] * 0.64),
         stamina: 100 * (stats[0] * 0.64),
         stats: stats,
-        weapon: weapons[2],
+        weapon: weapons[1],
         turn: false,
         status: Status.okay
     }
 
     const enemy: entity = createEnemy(stats, player.lvl);
 
-    console.log(enemy);
-    console.log(player);
 
     async function combat() {
         while (player.health > 0 && enemy.health > 0) {
             const availableMoves = moves(player.weapon);
-            console.log("⚔️ Your turn...");
-            console.log(`Available moves: ${availableMoves.join(", ")}`);
+            console.log("\n⚔️ Your turn...");
+            console.log(`❤️CURRENT HEALTH: ${Math.round(player.health)}`);
+            console.log(`💚CURRENT STAMINA: ${Math.round(player.stamina)}`);
 
             let validMove = false;
 
             while (!validMove) {
-                const chosenMove = await askQuestion("Which move do you want to use? ");
+                console.log("Which move do you want to use? ");
+                const chosenMove = await askQuestion(`Available moves: ${availableMoves.join(", ")}`);
+
                 const normalizedMove = chosenMove.toLowerCase();
 
                 if (chosenMove === "q") {
@@ -205,8 +206,13 @@ async function main() {
                     const result = await attack(normalizedMove, player, enemy, true);
                     validMove = true;
 
+
                     enemy.health -= result[0];
-                    console.log(`CURRENT ENEMY HEALTH: ${enemy.health}`);
+                    player.health += result[1];
+                    player.stamina -= result[2];
+                    enemy.status = result[3];
+                    player.status = result[4]
+
                 }
             }
 
@@ -217,6 +223,8 @@ async function main() {
             await new Promise(res => setTimeout(res, 3000));
 
             console.log("\n⚔️ Enemy's turn...");
+            console.log(`❤️CURRENT HEALTH: ${Math.round(enemy.health)}`);
+            console.log(`💚CURRENT STAMINA: ${Math.round(enemy.stamina)}`);
             const weaponMoves = moves(enemy.weapon);
             const chosenMoveIndex = randomInt(0, weaponMoves.length - 1);
             const enemyMove = weaponMoves[chosenMoveIndex].toLowerCase();
@@ -224,9 +232,11 @@ async function main() {
             console.log(`⚔️ Enemy uses ${enemyMove}!`);
             const enemyResult = await attack(enemyMove, player, enemy, false);
 
-            player.health -= enemyResult[0];
-            console.log(`CURRENT HEALTH: ${player.health}`);
 
+            player.health -= enemyResult[0];
+            enemy.health += enemyResult[1];
+            enemy.stamina -= enemyResult[2];
+            player.status = enemyResult[3];
 
             if (player.health <= 0) {
                 console.log("☠️ You have been defeated...");

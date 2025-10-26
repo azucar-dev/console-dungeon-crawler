@@ -38,16 +38,16 @@ export function moves(weapon: string): string[] {
             moves = ["bleeding cut", "anguish thrust", "scream slash"];
             break;
         case "damned sword":
-            moves = ["cursed slash", "life drain", "ghost lunge"];
+            moves = ["cursed slash", "overhead swing", "life drain", "ghost lunge"];
             break;
         case "poisoned knife":
-            moves = ["quick stab", "venom jab", "retreat"];
+            moves = ["quick stab", "slice", "venom jab", "retreat"];
             break;
         case "practice sword":
-            moves = ["strike", "parry", "step back"];
+            moves = ["strike", "stab", "parry", "step back"];
             break;
         case "unarmed":
-            moves = ["punch", "kick", "dodge"];
+            moves = ["punch", "kick", "hook", "dodge"];
             break;
         default:
             moves = ["Weapon not found."];
@@ -116,6 +116,7 @@ export const items: Item = {
         desc: "A cursed weapon once carried by an old king who was corrupted by it.",
         moves: [
             { name: "cursed slash", desc: "A dark strike that slowly drains the enemy's strength." },
+            { name: "overhead swing", desc: "Surprise your opponent with an unexpected overhead swing, potentionally dealing massive stun damage."},
             { name: "life drain", desc: "Siphons vitality from the target to heal yourself." },
             { name: "ghost lunge", desc: "A sudden forward attack that passes through armor with spectral force." }
         ]
@@ -125,6 +126,7 @@ export const items: Item = {
         desc: "A small blade coated with toxins from a Brazilian wandering spider.",
         moves: [
             { name: "quick stab", desc: "A fast, precise stab aiming for weak points." },
+            { name: "slice", desc: "Try to slice your opponents tendons crippling them."},
             { name: "venom jab", desc: "Delivers a poisonous jab that harms over time." },
             { name: "retreat", desc: "Step back quickly to evade in battle." }
         ]
@@ -134,6 +136,7 @@ export const items: Item = {
         desc: "A training blade used by young children, about the length of an arm.",
         moves: [
             { name: "strike", desc: "A simple but effective swing for training purposes." },
+            { name: "stab", desc: "Stab your opponent in a soft part of his body."},
             { name: "parry", desc: "Deflects an incoming attack, opening a chance for a riposte." },
             { name: "step back", desc: "Move backward to evade an attack and regain composure." }
         ]
@@ -144,6 +147,7 @@ export const items: Item = {
         moves: [
             { name: "punch", desc: "A basic but solid punch." },
             { name: "kick", desc: "A swift kick aimed at the opponent's body." },
+            { name: "hook", desc: "Test your boxing skills with a skillfully placed right hook."},
             { name: "dodge", desc: "Quickly evade an incoming attack." }
         ]
     }

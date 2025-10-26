@@ -28,7 +28,8 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
     const attacker = turn ? player : enemy;
     const agility = attacker.stats[3];
     const strength = attacker.stats[1];
-
+    const attackerStatus = attacker.status;
+    const enemystatuss = enemy.status;
 
     const name: string = enemy.name;
     let damage: number = 0;
@@ -39,7 +40,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
     const agilityBonus = agility * 3;
     const hitChancePercent = Math.min(95, 50 + agilityBonus);
     const hitChance = 21 - Math.floor(hitChancePercent / 5);
-    const strengthBonus = strength * 3;
+    let strengthBonus = strength * 3;
     const baseStam = 320;
 
     const rollPercent = randomInt(1, 20);
@@ -57,7 +58,57 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
         }
         console.log(`Rolled: ${rollPercent} (Need ${hitChance}+ to hit)`);
     }
+    let statusdmg: number = 0;
+    switch (attackerStatus) {
+        case 1:
+            statusdmg = player.health - player.health * 0.1;
+            logAction(
+                `🩸You bled for ${statusdmg} damage.`,
+                `🩸${name} bled for ${statusdmg} damage.`
+            );
+            break;
+        case 2:
+            statusdmg = player.health - player.health * 0.1;
+            logAction(
+                `☣️You were poisoned and took ${statusdmg} damage.`,
+                `☣️${name} took ${statusdmg} damage.}`
+            );
+            break;
+        case 3:
+            logAction(
+                `🥶 You are frozen in place and can't attack.`,
+                `🥶${enemy} is frozen in place and can't attack.`
+            );
+            return [0, 0, 0, 0, 0, 0];
+        case 4:
+            statusdmg = player.health - player.health * 0.11;
+            logAction(
+                `🔥 You are burning for ${statusdmg} damage.`,
+                `🔥${name} is burning for ${statusdmg} damage.`
+            )
+            break;
+        case 5:
+            logAction(
+                `😲 You are stunned and can't attack.`,
+                `😲${enemy} is stunned and can't attack.`
+            );
+            return [0, 0, 0, 0, 0, 0];
+        case 6:
+            strengthBonus -= strengthBonus * 0.75;
 
+            logAction(
+                `♿ You are crippled and can't attack properly`,
+                `♿ ${name} is crippled and can't attack properly.`
+            );
+            break;
+        case 9:
+
+
+    }
+
+    switch(enemystatuss) {
+        case 
+    }
 
     switch (moves.toLowerCase()) {
         // unarmed
@@ -105,7 +156,53 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 }
             }
 
-            stamUsed = baseStam * 0.05;
+            stamUsed = baseStam * 0.08;
+            break;
+        }
+
+        case "hook": {
+            const statusThreshold = 70 - (agilityBonus * 1.2);
+
+            await rollAnimation("hook");
+
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌As you struggle with ${name}, you try to go for a surprise hook; but it was underpowered`,
+                    `❌${name} tries to catch you offgaurd with a hook, but misses.`);
+                damage = 0;
+            } else {
+                damage = randomInt(30, 60) + strengthBonus;
+
+                if (rollPercent >= 18) {
+                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                    damage = Math.floor(damage * 1.25);
+                    logAction(
+                        `🤕Your critical hit stunned ${name}!`,
+                        `🤕${name}'s critical hit stunned you!`);
+                    if (turn) {
+                        enemyStatus = Status.crippled;
+                    } else {
+                        playerStatus = Status.crippled;
+                    }
+                }
+                logAction(
+                    `✅Remembering your form, you go for a powerful right hook to ${name}'s jaw, turning it to dust. (${damage} damage)`,
+                    `✅${name} goes for a powerful right hook, shattering your jaw, dealing ${damage} damage!`);
+
+                if (statusRoll >= statusThreshold && rollPercent <= 18) {
+                    logAction(
+                        `🤕Your hook stunned ${name}!`,
+                        `🤕${name}'s hook stunned you!`
+                    );
+                    if (turn) {
+                        enemyStatus = Status.crippled;
+                    } else {
+                        playerStatus = Status.crippled;
+                    }
+                }
+            }
+            stamUsed = baseStam * 0.10;
+
             break;
         }
 
@@ -153,7 +250,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 }
             }
 
-            stamUsed = baseStam * 0.07;
+            stamUsed = baseStam * 0.08;
             break;
         }
 
@@ -172,7 +269,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 playerStatus = Status.dodging;
             }
-            stamUsed = baseStam * 0.05;
+            stamUsed = baseStam * 0.07;
             break;
         }
 
@@ -213,6 +310,31 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
             break;
         }
 
+        case "stab": {
+            await rollAnimation("stab");
+
+            if (rollPercent < hitChance) {
+                logAction(
+                    `❌ You try to find an opening for a stab, but ${name} redirected your blade as you went for it.`,
+                    `❌You manage to redirect ${name}'s blade as he tries to go for a stab.`
+                );
+                damage = 0;
+            } else {
+                damage = randomInt(30, 60) + strengthBonus;
+
+                if (rollPercent >= 18) {
+                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                    damage = Math.floor(damage * 1.25);
+                }
+                logAction(
+                    `🗡️ You stab ${name} in the neck, he doesnt start bleeding, but it sure as hell hurt (${damage} damage)`,
+                    `🗡️ ${name} stabs you in the neck, dealing ${damage} damage!`
+                );
+            }
+            stamUsed = stamUsed * 0.08;
+            break;
+        }
+
         case "parry": {
             let riposted: boolean = false;
 
@@ -230,7 +352,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     `🗡️ ${name} parries your attack, leaving you open to a riposte.`
                 );
                 if (turn) {
-                    const answer = await askQuestionWithTimeout("❗ Riposte? (type 'r') ", 2500);
+                    const answer = await askQuestionWithTimeout("❗ Riposte? (TYPE 'R')❗", 3000);
                     if (answer === "r") {
                         riposted = true;
                     }
@@ -277,7 +399,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 playerStatus = Status.dodging;
             }
-            stamUsed = baseStam * 0.05;
+            stamUsed = baseStam * 0.06;
             break;
         }
 
@@ -309,7 +431,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     enemyStatus = Status.bleeding;
                 }
             }
-            stamUsed = baseStam * 0.06;
+            stamUsed = baseStam * 0.07;
             break;
         }
 
@@ -359,7 +481,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     );
                 }
             }
-            stamUsed = baseStam * 0.07;
+            stamUsed = baseStam * 0.09;
             break;
         }
 
@@ -378,7 +500,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 playerStatus = Status.dodging;
             }
-            stamUsed = baseStam * 0.05;
+            stamUsed = baseStam * 0.07;
             break;
         }
 
@@ -413,7 +535,7 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     enemyStatus = Status.poisoned;
                 }
             }
-            stamUsed = baseStam * 0.06;
+            stamUsed = baseStam * 0.07;
             break;
         }
 
@@ -446,12 +568,12 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     enemyStatus = Status.crippled;
                 }
             }
-            stamUsed = baseStam * 0.07;
+            stamUsed = baseStam * 0.08;
             break;
         }
 
         case "lifedrain": {
-            
+
             break;
         }
 
@@ -463,9 +585,9 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
     }
 
     if (turn) {
-        return [damage, healed, stamUsed, enemyStatus, playerStatus];
+        return [damage, healed, stamUsed, enemyStatus, playerStatus, statusdmg];
     } else {
-        return [damage, healed, stamUsed, playerStatus, enemyStatus];
+        return [damage, healed, stamUsed, playerStatus, enemyStatus, statusdmg];
     }
 }
 
