@@ -29,7 +29,9 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
     const agility = attacker.stats[3];
     const strength = attacker.stats[1];
     const attackerStatus = attacker.status;
-    const enemystatuss = enemy.status;
+    const enemystatuss = turn ? enemy.status : player.status;
+    let dodged: boolean = false;
+    let blocked: boolean = false;
 
     const name: string = enemy.name;
     let damage: number = 0;
@@ -100,14 +102,21 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 `♿ You are crippled and can't attack properly`,
                 `♿ ${name} is crippled and can't attack properly.`
             );
-            break;
+            return [0, 0, 0, 0, 0, 0];
         case 9:
 
 
     }
 
-    switch(enemystatuss) {
-        case 
+    switch (enemystatuss) {
+        case 7:
+            dodged = true;
+            enemyStatus = 0;
+            break;
+        case 8:
+            blocked = true;
+            enemyStatus = 0;
+            break;
     }
 
     switch (moves.toLowerCase()) {
@@ -124,38 +133,52 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 damage = 0;
             } else {
-                damage = randomInt(15, 30) + strengthBonus;
-
-                if (rollPercent >= 19) {
-                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.25);
+                if (dodged) {
+                    damage = 0;
                     logAction(
-                        `😵 Your critical hit stunned ${name}!`,
-                        `😵 ${name}'s critical hit stunned you!`
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
                     );
-                    if (turn) {
-                        enemyStatus = Status.stunned;
-                    } else {
-                        playerStatus = Status.stunned;
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
+                } else {
+
+                    damage += randomInt(15, 30) + strengthBonus;
+
+                    if (rollPercent >= 19) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
+                        logAction(
+                            `😵 Your critical hit stunned ${name}!`,
+                            `😵 ${name}'s critical hit stunned you!`
+                        );
+                        if (turn) {
+                            enemyStatus = Status.stunned;
+                        } else {
+                            playerStatus = Status.stunned;
+                        }
                     }
-                }
 
-                logAction(
-                    `✅ You hit ${name} for ${damage} damage!`,
-                    `✅ ${name} hit you for ${damage} damage!`
-                );
+                    logAction(
+                        `✅ You hit ${name} for ${damage} damage!`,
+                        `✅ ${name} hit you for ${damage} damage!`
+                    );
 
-                if (statusRoll >= statusThreshold && rollPercent < 19) {
-                    if (turn) {
-                        logAction("😵 You stunned the enemy!", "");
-                        enemyStatus = Status.stunned;
-                    } else {
-                        logAction(`😵 ${name} stunned you!`, "");
-                        playerStatus = Status.stunned;
+                    if (statusRoll >= statusThreshold && rollPercent < 19) {
+                        if (turn) {
+                            logAction("😵 You stunned the enemy!", "");
+                            enemyStatus = Status.stunned;
+                        } else {
+                            logAction(`😵 ${name} stunned you!`, "");
+                            playerStatus = Status.stunned;
+                        }
                     }
                 }
             }
-
             stamUsed = baseStam * 0.08;
             break;
         }
@@ -171,38 +194,51 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     `❌${name} tries to catch you offgaurd with a hook, but misses.`);
                 damage = 0;
             } else {
-                damage = randomInt(30, 60) + strengthBonus;
-
-                if (rollPercent >= 18) {
-                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.25);
+                if (dodged) {
+                    damage = 0;
                     logAction(
-                        `🤕Your critical hit stunned ${name}!`,
-                        `🤕${name}'s critical hit stunned you!`);
-                    if (turn) {
-                        enemyStatus = Status.crippled;
-                    } else {
-                        playerStatus = Status.crippled;
-                    }
-                }
-                logAction(
-                    `✅Remembering your form, you go for a powerful right hook to ${name}'s jaw, turning it to dust. (${damage} damage)`,
-                    `✅${name} goes for a powerful right hook, shattering your jaw, dealing ${damage} damage!`);
-
-                if (statusRoll >= statusThreshold && rollPercent <= 18) {
-                    logAction(
-                        `🤕Your hook stunned ${name}!`,
-                        `🤕${name}'s hook stunned you!`
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
                     );
-                    if (turn) {
-                        enemyStatus = Status.crippled;
-                    } else {
-                        playerStatus = Status.crippled;
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
+                } else {
+                    damage = randomInt(30, 60) + strengthBonus;
+
+                    if (rollPercent >= 18) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
+                        logAction(
+                            `🤕Your critical hit stunned ${name}!`,
+                            `🤕${name}'s critical hit stunned you!`);
+                        if (turn) {
+                            enemyStatus = Status.crippled;
+                        } else {
+                            playerStatus = Status.crippled;
+                        }
+                    }
+                    logAction(
+                        `✅Remembering your form, you go for a powerful right hook to ${name}'s jaw, turning it to dust. (${damage} damage)`,
+                        `✅${name} goes for a powerful right hook, shattering your jaw, dealing ${damage} damage!`);
+
+                    if (statusRoll >= statusThreshold && rollPercent <= 18) {
+                        logAction(
+                            `🤕Your hook stunned ${name}!`,
+                            `🤕${name}'s hook stunned you!`
+                        );
+                        if (turn) {
+                            enemyStatus = Status.crippled;
+                        } else {
+                            playerStatus = Status.crippled;
+                        }
                     }
                 }
+                stamUsed = baseStam * 0.10;
             }
-            stamUsed = baseStam * 0.10;
-
             break;
         }
 
@@ -218,38 +254,51 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 damage = 0;
             } else {
-                damage = randomInt(25, 35) + strengthBonus;
-
-                if (rollPercent >= 19) {
-                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.25);
+                if (dodged) {
+                    damage = 0;
                     logAction(
-                        `🦵 Your critical kick crippled ${name}'s leg!`,
-                        `🦵 ${name}'s critical kick crippled your leg!`
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
                     );
-                    if (turn) {
-                        enemyStatus = Status.crippled;
-                    } else {
-                        playerStatus = Status.crippled;
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
+                } else {
+                    damage = randomInt(25, 35) + strengthBonus;
+
+                    if (rollPercent >= 19) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
+                        logAction(
+                            `🦵 Your critical kick crippled ${name}'s leg!`,
+                            `🦵 ${name}'s critical kick crippled your leg!`
+                        );
+                        if (turn) {
+                            enemyStatus = Status.crippled;
+                        } else {
+                            playerStatus = Status.crippled;
+                        }
                     }
-                }
 
-                logAction(
-                    `✅ You kicked ${name} in the shin and did ${damage} damage!`,
-                    `✅ ${name} kicked you in the shin and did ${damage} damage!`
-                );
+                    logAction(
+                        `✅ You kicked ${name} in the shin and did ${damage} damage!`,
+                        `✅ ${name} kicked you in the shin and did ${damage} damage!`
+                    );
 
-                if (statusRoll >= statusThreshold && rollPercent < 19) {
-                    if (turn) {
-                        enemyStatus = Status.crippled;
-                        logAction(`🦵 You crippled ${name}'s leg!`, "");
-                    } else {
-                        playerStatus = Status.crippled;
-                        logAction(`🦵 ${name} crippled your leg!`, "");
+                    if (statusRoll >= statusThreshold && rollPercent < 19) {
+                        if (turn) {
+                            enemyStatus = Status.crippled;
+                            logAction(`🦵 You crippled ${name}'s leg!`, "");
+                        } else {
+                            playerStatus = Status.crippled;
+                            logAction(`🦵 ${name} crippled your leg!`, "");
+                        }
                     }
                 }
             }
-
             stamUsed = baseStam * 0.08;
             break;
         }
@@ -284,26 +333,40 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     `❌ ${name} takes a swing at you, but misses narrowly.`
                 );
             } else {
-                damage = randomInt(20, 35) + strengthBonus;
-                logAction(
-                    `🗡️ You strike ${name} in the shoulder and did ${damage} damage!`,
-                    `🗡️ ${name} strikes you in the shoulder and did ${damage} damage!`
-                );
-                if (rollPercent >= 19) {
-                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.25);
+                if (dodged) {
+                    damage = 0;
                     logAction(
-                        `😵 Your swing put ${name}'s shoulder out of its socket!`,
-                        `😵 ${name}'s swing put your shoulder out of its socket!`
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
                     );
-                    enemyStatus = Status.crippled;
-                }
-                if (statusRoll >= statusThreshold && rollPercent < 19) {
+                } else if (blocked) {
+                    damage = 0;
                     logAction(
-                        `😵 Your swing put ${name}'s shoulder out of its socket!`,
-                        `😵 ${name}'s swing put your shoulder out of its socket!`
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
                     );
-                    enemyStatus = Status.crippled;
+                } else {
+                    damage = randomInt(20, 35) + strengthBonus;
+                    logAction(
+                        `🗡️ You strike ${name} in the shoulder and did ${damage} damage!`,
+                        `🗡️ ${name} strikes you in the shoulder and did ${damage} damage!`
+                    );
+                    if (rollPercent >= 19) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
+                        logAction(
+                            `😵 Your swing put ${name}'s shoulder out of its socket!`,
+                            `😵 ${name}'s swing put your shoulder out of its socket!`
+                        );
+                        enemyStatus = Status.crippled;
+                    }
+                    if (statusRoll >= statusThreshold && rollPercent < 19) {
+                        logAction(
+                            `😵 Your swing put ${name}'s shoulder out of its socket!`,
+                            `😵 ${name}'s swing put your shoulder out of its socket!`
+                        );
+                        enemyStatus = Status.crippled;
+                    }
                 }
             }
             stamUsed = baseStam * 0.07;
@@ -320,16 +383,30 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 damage = 0;
             } else {
-                damage = randomInt(30, 60) + strengthBonus;
+                if (dodged) {
+                    damage = 0;
+                    logAction(
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
+                    );
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
+                } else {
+                    damage = randomInt(30, 60) + strengthBonus;
 
-                if (rollPercent >= 18) {
-                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.25);
+                    if (rollPercent >= 18) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
+                    }
+                    logAction(
+                        `🗡️ You stab ${name} in the neck, he doesnt start bleeding, but it sure as hell hurt (${damage} damage)`,
+                        `🗡️ ${name} stabs you in the neck, dealing ${damage} damage!`
+                    );
                 }
-                logAction(
-                    `🗡️ You stab ${name} in the neck, he doesnt start bleeding, but it sure as hell hurt (${damage} damage)`,
-                    `🗡️ ${name} stabs you in the neck, dealing ${damage} damage!`
-                );
             }
             stamUsed = stamUsed * 0.08;
             break;
@@ -347,37 +424,51 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 healed = -10;
             } else {
-                logAction(
-                    `🗡️ You parry ${name}'s attack, leaving them open to a riposte.`,
-                    `🗡️ ${name} parries your attack, leaving you open to a riposte.`
-                );
-                if (turn) {
-                    const answer = await askQuestionWithTimeout("❗ Riposte? (TYPE 'R')❗", 3000);
-                    if (answer === "r") {
-                        riposted = true;
-                    }
+                if (dodged) {
+                    damage = 0;
+                    logAction(
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
+                    );
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
                 } else {
-                    const res: number = randomInt(0, 1);
-                    if (res === 1) {
-                        riposted = true;
+                    logAction(
+                        `🗡️ You parry ${name}'s attack, leaving them open to a riposte.`,
+                        `🗡️ ${name} parries your attack, leaving you open to a riposte.`
+                    );
+                    if (turn) {
+                        const answer = await askQuestionWithTimeout("❗ Riposte? (TYPE 'R')❗", 3000);
+                        if (answer === "r") {
+                            riposted = true;
+                        }
+                    } else {
+                        const res: number = randomInt(0, 1);
+                        if (res === 1) {
+                            riposted = true;
+                        }
                     }
-                }
 
-                if (riposted) {
-                    damage = randomInt(30, 40);
-                    if (rollPercent >= 19) {
-                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                        damage = Math.floor(damage * 1.25);
+                    if (riposted) {
+                        damage = randomInt(30, 40);
+                        if (rollPercent >= 19) {
+                            logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                            damage = Math.floor(damage * 1.25);
+                        }
+                        logAction(
+                            "🗡️ You riposte successfully, dealing massive damage!",
+                            "🗡️ Your opponent ripostes successfully, dealing massive damage!"
+                        );
+                    } else {
+                        logAction(
+                            "❌ You didn't respond in time, riposte failed.",
+                            "❌ Your opponent hesitated and missed their riposte opportunity."
+                        );
                     }
-                    logAction(
-                        "🗡️ You riposte successfully, dealing massive damage!",
-                        "🗡️ Your opponent ripostes successfully, dealing massive damage!"
-                    );
-                } else {
-                    logAction(
-                        "❌ You didn't respond in time, riposte failed.",
-                        "❌ Your opponent hesitated and missed their riposte opportunity."
-                    );
                 }
             }
             stamUsed = baseStam * 0.10;
@@ -415,20 +506,34 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     `❌ ${name} tries to stab you... but can't find an opening.`
                 );
             } else {
-                logAction(
-                    `🔪 You stab ${name} in the chest!`,
-                    `🔪 ${name} stabs you in the chest!`
-                );
-                damage = randomInt(30, 40) + strengthBonus;
-                if (rollPercent >= 19) {
-                    damage = Math.floor(damage * 1.25);
-                }
-                if (statusRoll >= statusThreshold) {
+                if (dodged) {
+                    damage = 0;
                     logAction(
-                        `🩸 ${name} starts bleeding!`,
-                        `🩸 You start bleeding!`
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
                     );
-                    enemyStatus = Status.bleeding;
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
+                } else {
+                    logAction(
+                        `🔪 You stab ${name} in the chest!`,
+                        `🔪 ${name} stabs you in the chest!`
+                    );
+                    damage = randomInt(30, 40) + strengthBonus;
+                    if (rollPercent >= 19) {
+                        damage = Math.floor(damage * 1.25);
+                    }
+                    if (statusRoll >= statusThreshold) {
+                        logAction(
+                            `🩸 ${name} starts bleeding!`,
+                            `🩸 You start bleeding!`
+                        );
+                        enemyStatus = Status.bleeding;
+                    }
                 }
             }
             stamUsed = baseStam * 0.07;
@@ -458,27 +563,41 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     );
                 }
             } else {
-                logAction(
-                    `☠️ You hit ${name} with a slice across the forearm!`,
-                    `☠️ ${name} hits you with a slice across your forearm!`
-                );
-                damage = randomInt(25, 35) + strengthBonus;
-                if (rollPercent >= 19) {
-                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.25);
-                }
-
-                if (statusRoll >= statusThreshold) {
+                if (dodged) {
+                    damage = 0;
                     logAction(
-                        `☠️ The poison starts affecting ${name}...`,
-                        `☠️ The poison starts affecting you...`
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
                     );
-                    enemyStatus = Status.poisoned;
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
                 } else {
                     logAction(
-                        `🤢 ${name} throws up but seems unaffected...`,
-                        `🤢 You throw up but seem unaffected...`
+                        `☠️ You hit ${name} with a slice across the forearm!`,
+                        `☠️ ${name} hits you with a slice across your forearm!`
                     );
+                    damage = randomInt(25, 35) + strengthBonus;
+                    if (rollPercent >= 19) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
+                    }
+
+                    if (statusRoll >= statusThreshold) {
+                        logAction(
+                            `☠️ The poison starts affecting ${name}...`,
+                            `☠️ The poison starts affecting you...`
+                        );
+                        enemyStatus = Status.poisoned;
+                    } else {
+                        logAction(
+                            `🤢 ${name} throws up but seems unaffected...`,
+                            `🤢 You throw up but seem unaffected...`
+                        );
+                    }
                 }
             }
             stamUsed = baseStam * 0.09;
@@ -517,22 +636,36 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                 );
                 damage = 0;
             } else {
-                damage = randomInt(30, 45) + strengthBonus;
-                if (rollPercent >= 19) {
-                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.25);
-                }
-                logAction(
-                    `⚔️ You slash ${name} with your cursed blade, doing ${damage} damage!`,
-                    `⚔️ ${name} slashes you with their cursed blade, doing ${damage} damage!`
-                );
-
-                if (statusRoll >= statusThreshold) {
+                if (dodged) {
+                    damage = 0;
                     logAction(
-                        `☠️ The cursed blade's poison takes hold on ${name}.`,
-                        `☠️ The cursed blade's poison takes hold on you.`
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
                     );
-                    enemyStatus = Status.poisoned;
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
+                } else {
+                    damage = randomInt(30, 45) + strengthBonus;
+                    if (rollPercent >= 19) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
+                    }
+                    logAction(
+                        `⚔️ You slash ${name} with your cursed blade, doing ${damage} damage!`,
+                        `⚔️ ${name} slashes you with their cursed blade, doing ${damage} damage!`
+                    );
+
+                    if (statusRoll >= statusThreshold) {
+                        logAction(
+                            `☠️ The cursed blade's poison takes hold on ${name}.`,
+                            `☠️ The cursed blade's poison takes hold on you.`
+                        );
+                        enemyStatus = Status.poisoned;
+                    }
                 }
             }
             stamUsed = baseStam * 0.07;
@@ -550,22 +683,36 @@ export async function attack(moves: string, player: entity, enemy: entity, turn:
                     `❌ ${name} attempts a dark strike on you, but misses.`
                 );
             } else {
-                damage = randomInt(30, 50) + strengthBonus;
-                if (rollPercent >= 19) {
-                    logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
-                    damage = Math.floor(damage * 1.25);
-                }
-                logAction(
-                    `🌑 You hit ${name} with a dark strike for ${damage} damage!`,
-                    `🌑 ${name} hits you with a dark strike for ${damage} damage!`
-                );
-
-                if (statusRoll >= statusThreshold) {
+                if (dodged) {
+                    damage = 0;
                     logAction(
-                        `😵 ${name} is weakened by the dark strike!`,
-                        `😵 You are weakened by the dark strike!`
+                        `💨 ${name} dodged your attack!`,
+                        `💨You dodged ${name}'s attack!`
                     );
-                    enemyStatus = Status.crippled;
+                } else if (blocked) {
+                    damage = 0;
+                    logAction(
+                        `🛡️ ${name} blocked your attack!`,
+                        `🛡️You blocked ${name}'s attack!`
+                    );
+                } else {
+                    damage = randomInt(30, 50) + strengthBonus;
+                    if (rollPercent >= 19) {
+                        logAction("💥 CRITICAL HIT!", "💥 CRITICAL HIT!");
+                        damage = Math.floor(damage * 1.25);
+                    }
+                    logAction(
+                        `🌑 You hit ${name} with a dark strike for ${damage} damage!`,
+                        `🌑 ${name} hits you with a dark strike for ${damage} damage!`
+                    );
+
+                    if (statusRoll >= statusThreshold) {
+                        logAction(
+                            `😵 ${name} is weakened by the dark strike!`,
+                            `😵 You are weakened by the dark strike!`
+                        );
+                        enemyStatus = Status.crippled;
+                    }
                 }
             }
             stamUsed = baseStam * 0.08;

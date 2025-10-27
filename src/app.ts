@@ -213,6 +213,8 @@ async function main() {
                     enemy.status = result[3];
                     player.status = result[4]
 
+                    console.log(player)
+
                 }
             }
 
@@ -231,12 +233,15 @@ async function main() {
 
             console.log(`⚔️ Enemy uses ${enemyMove}!`);
             const enemyResult = await attack(enemyMove, player, enemy, false);
+            console.log(player);
 
 
             player.health -= enemyResult[0];
             enemy.health += enemyResult[1];
             enemy.stamina -= enemyResult[2];
             player.status = enemyResult[3];
+
+            console.log(player);
 
             if (player.health <= 0) {
                 console.log("☠️ You have been defeated...");
